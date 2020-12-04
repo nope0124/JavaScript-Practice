@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>15パズル</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <ul class="headerBox">
+            <li class="headerLi"><a href="../../index.html">HOME</a></li>
+            <li class="headerLi"><a href="../index.html">ドットインストール</a></li>
+            <li class="headerLi"><a href="">TTT</a></li>
+            <li class="headerLi"><a href="">実装中</a></li>
+            <li class="headerLi"><a href="">実装中</a></li>
+        </ul>
+    </header>
+    <main>
+
+        <canvas id="stage" width="360" height="360">
+          Canvas not supported ...
+        </canvas>
+        <div class="box">
+          <div id="reset">Reset</div>
+          <div id="run">Run</div>
+        </div>
+        
+    </main>
+  <script>
+      (function(){
+        "use strict";
+        var canvas=document.getElementById("stage");
+        var context;
+        var image;
+        var IMAGE_URL="puzzle.png";
+        var tiles=[];
+        var ROW_COUNT=4;
+        var COL_COUNT=4;
+        var PIC_WIDTH=360;
+        var PIC_HEIGHT=360;
+        var TILE_WIDTH=PIC_WIDTH/COL_COUNT;
+        var TILE_HEIGHT=PIC_HEIGHT/ROW_COUNT;
+        var border=32;
+        var moveCount=50;
+        var ans=[];
+        var flag=0;
+        var runCount=-1;
+        var UDLR=[
+            [0,-1],
+            [1,0],
+            [0,1],
+            [-1,0],
+        ];
+        function initTiles(){
+            for(let row=0;row<ROW_COUNT;row++){
+                tiles[row]=[];
+                for(let col=0;col<COL_COUNT;col++){
+                    tiles[row][col]=row*ROW_COUNT+col;
+                }
+            }
+            tiles[ROW_COUNT-1][COL_COUNT-1]=-1;
+        }
+
+        function moveBlank(count){
+            var blankRow=ROW_COUNT-1;
+            var blankCol=COL_COUNT-1;
+            var tmpCount=count;
+            while(1){
+                while(1){
+                    var targetPosition=Math.floor(Math.random()*UDLR.length);
+                    var targetCol=blankCol+UDLR[targetPosition][0];
+                    var targetRow=blankRow+UDLR[targetPosition][1];
+                    if(targetCol<0 || targetCol>=COL_COUNT || targetRow<0 || targetRow>=ROW_COUNT){
+                        continue;
+                    }
+                    tiles[blankRow][blankCol]=tiles[targetRow][targetCol];
+                    tiles[targetRow][targetCol]=-1;
+                    blankCol=targetCol;
+                    blankRow=targetRow;
+                    if(!--tmpCount){
+                        break;
+                    }
+                }
+                tmpCount=count;
+                if(manhattan(tiles)>=border){
+                    // console.log(manhattan(tiles));
+                    break;
+                }else{
+                    initTiles();
+                    blankRow=ROW_COUNT-1;
+                    blankCol=COL_COUNT-1;
+                }
+            }
+
+        }
+
+        function manhattan(tmpTiles){
+            var count=0;
+            for(let row=0;row<4;row++){
+                for(let col=0;col<4;col++){
+                    if(tmpTiles[row][col]===-1){
+                        continue;
+                    }
+                    count+=Math.abs(Math.floor(tmpTiles[row][col]/4)-row)+Math.abs(tmpTiles[row][col]%4-col);
+                }
+            }
+            return count;
+        }
+
+        function drawPuzzle(){
+            var sx,sy;
+            var dx,dy;
+            for(let row=0;row<ROW_COUNT;row++){
+                for(let col=0;col<COL_COUNT;col++){
+                    dx=col*TILE_WIDTH;
+                    dy=row*TILE_HEIGHT;
+                    if(tiles[row][col]===-1){
+                        context.fillStyle="#eeeeee";
+                        context.fillRect(dx,dy,TILE_WIDTH,TILE_HEIGHT);
+                    }else{
+                        sx=(tiles[row][col]%COL_COUNT)*TILE_WIDTH;
+                        sy=Math.floor(tiles[row][col]/COL_COUNT)*TILE_HEIGHT;
+                        context.drawImage(image,sx,sy,TILE_WIDTH,TILE_HEIGHT,dx,dy,TILE_WIDTH,TILE_HEIGHT);
+                    }
+                }
+            }
+        }
+
+        function checkResult(){
+            for(let row=0;row<ROW_COUNT;row++){
+                for(let col=0;col<COL_COUNT;col++){
+                    if(row===ROW_COUNT-1 && col===COL_COUNT-1){
+                        return true;
+                    }
+                    if(tiles[row][col]!==row*COL_COUNT+col){
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+        if(!canvas.getContext){
+            alert("Canvas not supported ...");
+            return;
+        }
+        context=canvas.getContext("2d");
+        image=document.createElement("img");
+        image.src=IMAGE_URL;
+        image.addEventListener("load",function(){
+            initTiles();
+            moveBlank(moveCount);
+            drawPuzzle();
+        });
+
+        reset.addEventListener("click",function(){
+            initTiles();
+            moveBlank(moveCount);
+            drawPuzzle();
+        });
+
+
+        function bfs(count,state,sx,sy,prev,tmpAns){
+            var newState=[...state];
+            var tmptmpAns=[...tmpAns];
+            if(manhattan(newState)>count){
+                return;
+            }
+            if(count===0){
+                ans=tmptmpAns;
+                flag=1;
+                return;
+            }
+            if(flag){
+                return;
+            }
+            
+            for(let i=0;i<4;i++){
+                var nx=sx+UDLR[i][0];
+                var ny=sy+UDLR[i][1];
+                if(nx<0 || ny<0 || nx>=COL_COUNT || ny>=ROW_COUNT || ((i+2)%4)===prev){
+                    continue;
+                }
+                
+                newState[sy][sx]=newState[ny][nx];
+                newState[ny][nx]=-1;
+                tmptmpAns.push(ny*COL_COUNT+nx);
+                
+                bfs(count-1,newState,nx,ny,i,tmptmpAns);
+                tmptmpAns.pop();
+                newState[ny][nx]=newState[sy][sx];
+                newState[sy][sx]=-1;
+            }
+        }
+
+
+        function solve(count){
+            flag=0;
+            var tmpAns=[];
+            var sx,sy;
+            for(let i=0;i<4;i++){
+                for(let j=0;j<4;j++){
+                    if(tiles[i][j]===-1){
+                        sx=j;
+                        sy=i;
+                    }
+                }
+            }
+            bfs(count,tiles,sx,sy,-1,tmpAns);
+            return flag;
+        }
+
+
+        run.addEventListener("click",function(){
+            if(checkResult()){
+                return;
+            }
+            for(let i=0;i<=85;i++){
+                if(solve(i)){
+                    runCount=0;
+                    // console.log(ans);
+                    break;
+                }
+            }
+            
+        });
+
+        function moveBlock(col,row){
+            if(tiles[row][col]===-1){
+                return;
+            }
+            for(let i=0;i<UDLR.length;i++){
+                var targetCol=col+UDLR[i][0];
+                var targetRow=row+UDLR[i][1];
+                if(targetCol<0 || targetCol>=COL_COUNT || targetRow<0 || targetRow>=ROW_COUNT){
+                    continue;
+                }
+                if(tiles[targetRow][targetCol]===-1){
+                    tiles[targetRow][targetCol]=tiles[row][col];
+                    tiles[row][col]=-1;
+                    drawPuzzle();
+                    // if(checkResult()){
+                    //     alert("Game Clear!");
+                    // }
+                    break;
+                }
+            }
+        }
+
+        canvas.addEventListener("click",function(e){
+            var x,y;
+            var rect;
+            rect=e.target.getBoundingClientRect();
+            x=e.clientX-rect.left;
+            y=e.clientY-rect.top;
+            var row=Math.floor(y/TILE_HEIGHT);
+            var col=Math.floor(x/TILE_WIDTH);
+            moveBlock(col,row);
+        });
+
+        var countUp=function(){
+            if(runCount>=0){
+                moveBlock(ans[runCount]%4,Math.floor(ans[runCount]/4));
+                runCount++;
+                if(runCount>=ans.length) runCount=-1;
+            }
+        }
+
+        setInterval(countUp, 500);
+
+
+
+      })();
+  </script>
+</body>
+</html>
