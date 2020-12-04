@@ -1,8 +1,12 @@
 (function(){
 
-
+    var h = 51;
+    var w = 101;
+    var map;
     var Map=function(col,row){
         this.maze=[];
+        this.graph=[];
+        this.path=[];
         this.col=col;
         this.row=row;
         this.sX=0;
@@ -27,6 +31,13 @@
                     else this.maze[y][x]=0;
                 }
             }
+            
+            for (let y=0;y<row;y++) {
+                this.graph[y]=[];
+                for(let x=0;x<col;x++){
+                    this.graph[y][x]=-1;
+                }
+            }
 
             for(let y=1;y<row;y+=2){
                 for(let x=1;x<col;x+=2){
@@ -43,6 +54,46 @@
         this.draw=function(){
             var view=new View();
             view.draw(this);
+        };
+
+        this.bfs=function(){
+            var view=new View();
+            const que = [];
+            que.push(0);
+            this.graph[0][0] = 0;
+            while (que.length > 0) {
+                var v = que.shift();
+                var x = v % col;
+                var y = Math.floor(v / col);
+                for (let i = 0; i < 4; i++) {
+                    var nx = x + this.points[i][0];
+                    var ny = y + this.points[i][1];
+                    if (nx < 0 || nx >= col || ny < 0 || ny >= row) continue;
+                    if (this.maze[ny][nx] === 1) continue;
+                    if (this.graph[ny][nx] !== -1) continue;
+                    this.graph[ny][nx] = this.graph[y][x] + 1;
+                    que.push(ny * col + nx);
+                }
+            }
+            var x = col - 1;
+            var y = row - 1;
+            var cnt = 0;
+            while (1) {
+                for (let i = 0; i < 4; i++) {
+                    var nx = x + this.points[i][0];
+                    var ny = y + this.points[i][1];
+                    if (nx < 0 || nx >= col || ny < 0 || ny >= row) continue;
+                    if (this.graph[ny][nx] === this.graph[y][x] - 1) {
+                        this.path[cnt] = col * ny + nx;
+                        cnt++;
+                        x = nx;
+                        y = ny;
+                        break;
+                    }
+                }
+                if (x === 0 && y === 0) break;
+            }
+            view.bfsDraw(this);
         };
     };
 
@@ -76,6 +127,17 @@
                 }
             }
         };
+
+        this.bfsDraw=function(map){
+
+            //迷路の内部
+            for(let i = 0; i < map.path.length; i++) {
+                var x = map.path[i] % map.col;
+                var y = Math.floor(map.path[i] / map.col);
+                this.drawRoute(x+1,y+1);
+            }
+        };
+
         this.drawWall=function(x,y){
             this.ctx.fillStyle=this.wallColor;
             this.drawRect(x,y);
@@ -96,15 +158,23 @@
         };
     };
     function reset(){
-        var map=new Map(51,51);
+        map=new Map(w,h);
         map.init();
         map.draw();
+    }
+
+    function run(){
+        map.bfs();
     }
 
     reset();
 
     document.getElementById("reset").addEventListener("click",function(){
         reset();
+    });
+
+    document.getElementById("run").addEventListener("click",function(){
+        run();
     });
 
     // //迷路で配列を用意

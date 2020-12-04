@@ -58,6 +58,16 @@ main{
     background-color: #AAEDFF;
 }
 
+.btn{
+    width:600px;
+    margin:50px auto;
+}
+
+.box{
+    display: flex;
+}
+
+
 #reset{
     width: 200px;
     margin:30px auto 10px;
@@ -73,7 +83,29 @@ main{
     opacity: 0.8;
 }
 
+
 #reset:active{
+    margin:35px auto 5px;
+    box-shadow: 0 0px 0 #0088cc;
+}
+
+#run{
+    width: 200px;
+    margin:30px auto 10px;
+    padding:7px;
+    border-radius: 5px;
+    background: #00aaff;
+    box-shadow: 0 5px 0 #0088cc;
+    cursor: pointer;
+    text-align: center;
+}
+
+#run:hover{
+    opacity: 0.8;
+}
+
+
+#run:active{
     margin:35px auto 5px;
     box-shadow: 0 0px 0 #0088cc;
 }
