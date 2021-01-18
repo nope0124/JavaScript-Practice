@@ -9,7 +9,7 @@
 <br>
 
 ## Fortune
-おみくじを引きます。<strike>ゴミです。</strike>
+おみくじを引きます。<!-- <strike>ゴミです。</strike> -->
 <br>
 <br>
 
